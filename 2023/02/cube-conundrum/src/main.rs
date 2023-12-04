@@ -18,35 +18,39 @@ fn main() {
                 let game_id = game[0].chars().collect::<Vec<char>>();
                 let throws = game[1].split(";").collect::<Vec<&str>>();
 
-                let mut red_cubes: i8 = 0;
-                let mut green_cubes: i8 = 0;
-                let mut blue_cubes: i8 = 0;
-
+                let mut valid_throw = true;
                 for throw in throws {
                     let throw_without_spaces = throw.replace(" ", "");
 
                     for set in throw_without_spaces.split(",") {
                         if set.contains("red") {
                             let number_of_cubes = set.replace("red", "").parse::<i8>().unwrap();
-                            red_cubes += number_of_cubes;
+                            valid_throw = number_of_cubes <= red_cubes_limit;
+                            if !valid_throw {
+                                break;
+                            }
                         }
                         if set.contains("green") {
                             let number_of_cubes = set.replace("green", "").parse::<i8>().unwrap();
-                            green_cubes += number_of_cubes;
+                            valid_throw = number_of_cubes <= green_cubes_limit;
+                            if !valid_throw {
+                                break;
+                            }
                         }
                         if set.contains("blue") {
                             let number_of_cubes = set.replace("blue", "").parse::<i8>().unwrap();
-                            blue_cubes += number_of_cubes;
+                            valid_throw = number_of_cubes <= blue_cubes_limit;
+                            if !valid_throw {
+                                break;
+                            }
                         }
+                    }
+                    if !valid_throw {
+                        break;
                     }
                 }
 
-                println!(
-                    "Red: {}, Green: {}, Blue: {} \n",
-                    red_cubes, green_cubes, blue_cubes
-                );
-
-                if (red_cubes <= red_cubes_limit) && (green_cubes <= green_cubes_limit) && (blue_cubes <= blue_cubes_limit) {
+                if (valid_throw) {
                     let game_id_value: i32 = game_id
                         .iter()
                         .skip(5)
