@@ -1,8 +1,8 @@
+use std::cmp::Reverse;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
-use std::cmp::Reverse;
 
 fn main() {
     // File input.txt must exist in the current path
@@ -10,7 +10,7 @@ fn main() {
         let card_list = vec![
             'A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2',
         ];
-        let mut hands: Vec<(Vec<(char, i32)>, usize)> = Vec::new();
+        let mut hands: Vec<(Vec<(char, i32)>, usize, Vec<char>)> = Vec::new();
 
         // Consumes the iterator, returns an (Optional) String
         for line in lines {
@@ -25,30 +25,35 @@ fn main() {
                 cards_in_hand.sort_unstable_by_key(|k| {
                     (
                         Reverse(k.1),
-                        card_list
-                            .iter()
-                            .position(|&x| x == k.0)
-                            .unwrap(),
+                        card_list.iter().position(|&x| x == k.0).unwrap(),
                     )
                 });
-                println!("{:?}", &cards_in_hand);
 
                 let bid = hand[1].parse::<usize>().unwrap();
-                hands.push((cards_in_hand, bid));
+                hands.push((cards_in_hand, bid, hand[0].chars().collect()));
             }
         }
 
         hands.sort_unstable_by_key(|k| {
             (
-                Reverse(k.0[0].1),
-                card_list
-                    .iter()
-                    .position(|&x| x == k.0[0].0)
-                    .unwrap(),
+                k.0.len(),
+                k.0.iter()
+                    .map(|x| Reverse(x.1))
+                    .collect::<Vec<_>>(),
+                k.2.iter()
+                    .map(|y| card_list.iter().position(|&x| x == *y).unwrap())
+                    .collect::<Vec<_>>(),
             )
         });
 
-        println!("{:?}", hands);
+        let mut result = 0;
+        for (index, hand) in hands.iter().enumerate() {
+            println!("{:?}", hand);
+            result += (hands.len() - index) * hand.1 as usize;
+        }
+
+        println!("Len: {}", hands.len());
+        println!("{}", result);
     }
 }
 
