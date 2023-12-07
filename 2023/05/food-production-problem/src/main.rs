@@ -13,7 +13,9 @@ fn main() {
         let mut humidity_to_location_map: Vec<Vec<usize>> = Vec::new();
 
         let file_content = lines.collect::<Vec<Result<String, io::Error>>>();
-        let seeds = read_seeds(file_content[0].as_ref().unwrap());
+        let mut seeds = read_seeds(file_content[0].as_ref().unwrap());
+        seeds.sort();
+        println!("{:?}", seeds);
         
         let mut currently_reading = "";
         for line in file_content.iter().skip(1) {
@@ -57,45 +59,90 @@ fn main() {
             }
         }
 
-        let mut lowest_location: usize = usize::max_value();
-        for seed in seeds {
-            println!("Seed: {}", seed);
+        seed_to_soil_map.sort_by(|a, b| a[1].cmp(&b[1]));
+        println!("{:?}", seed_to_soil_map);
 
-            // convert to soil
-            let mut result = convert_by_map(seed, &seed_to_soil_map);
-            println!("Soil: {}", seed);
+        soil_to_fertilizer_map.sort_by(|a, b| a[1].cmp(&b[1]));
+        fertilizer_to_water_map.sort_by(|a, b| a[1].cmp(&b[1]));
+        water_to_light_map.sort_by(|a, b| a[1].cmp(&b[1]));
+        light_to_temperature_map.sort_by(|a, b| a[1].cmp(&b[1]));
+        temperature_to_humidity_map.sort_by(|a, b| a[1].cmp(&b[1]));
+        humidity_to_location_map.sort_by(|a, b| a[1].cmp(&b[1]));
 
-            // convert to fertilizer
-            result = convert_by_map(result, &soil_to_fertilizer_map);
-            println!("Fertilizer: {}", result);
+        let mut lowest_location: usize = calculate_lowest_location(
+            &seeds,
+            &seed_to_soil_map,
+            &soil_to_fertilizer_map,
+            &fertilizer_to_water_map,
+            &water_to_light_map,
+            &light_to_temperature_map,
+            &temperature_to_humidity_map,
+            & humidity_to_location_map
+        );
+        println!("Lowest location - part 1: {}", lowest_location);
 
-            // convert to water
-            result = convert_by_map(result, &fertilizer_to_water_map);
-            println!("Water: {}", result);
+        let seeds_ranges = convert_seeds_to_ranges(&seeds);
+        lowest_location = calculate_lowest_location(
+            &seeds_ranges,
+            &seed_to_soil_map,
+            &soil_to_fertilizer_map,
+            &fertilizer_to_water_map,
+            &water_to_light_map,
+            &light_to_temperature_map,
+            &temperature_to_humidity_map,
+            &humidity_to_location_map
+        );
+        println!("Lowest location - part 2: {}", lowest_location);
+    }
+}
 
-            // convert to light
-            result = convert_by_map(result, &water_to_light_map);
-            println!("Light: {}", result);
+fn convert_seeds_to_ranges(seeds: &Vec<usize>) -> Vec<usize> {
+    let mut seeds_ranges: Vec<usize> = Vec::new();
+    let mut current_seed = seeds[0];
 
-            // convert to temperature
-            result = convert_by_map(result, &light_to_temperature_map);
-            println!("Temperature: {}", result);
-
-            // convert to humidity
-            result = convert_by_map(result, &temperature_to_humidity_map);
-            println!("Humidity: {}", result);
-
-            // convert to location
-            result = convert_by_map(result, &humidity_to_location_map);
-            println!("Location: {}", result);
-
-            if lowest_location > result {
-                lowest_location = result;
+    for (index, seed) in seeds.iter().enumerate() {
+        if index % 2 == 0 {
+            current_seed = seed.clone();
+        }
+        else {
+            let mut iterator = 0;
+            let limiter = seed + current_seed;
+            while current_seed + iterator < limiter {
+                seeds_ranges.push(current_seed + iterator);
+                iterator += 1;
             }
         }
-
-        println!("Lowest location: {}", lowest_location);
     }
+
+    seeds_ranges.sort();
+    return seeds_ranges;
+}
+
+fn calculate_lowest_location(
+    seeds: &Vec<usize>,
+    seed_to_soil_map: &Vec<Vec<usize>>,
+    soil_to_fertilizer_map: &Vec<Vec<usize>>,
+    fertilizer_to_water_map: &Vec<Vec<usize>>,
+    water_to_light_map: &Vec<Vec<usize>>,
+    light_to_temperature_map: &Vec<Vec<usize>>,
+    temperature_to_humidity_map: &Vec<Vec<usize>>,
+    humidity_to_location_map: &Vec<Vec<usize>>
+) -> usize {
+    let mut lowest_location: usize = usize::max_value();
+    for seed in seeds {
+        let mut result = convert_by_map(*seed, seed_to_soil_map);
+        result = convert_by_map(result, soil_to_fertilizer_map);
+        result = convert_by_map(result, fertilizer_to_water_map);
+        result = convert_by_map(result, water_to_light_map);
+        result = convert_by_map(result, light_to_temperature_map);
+        result = convert_by_map(result, temperature_to_humidity_map);
+        result = convert_by_map(result, humidity_to_location_map);
+        if lowest_location > result {
+            lowest_location = result;
+        }
+    }
+
+    return lowest_location;
 }
 
 fn load_input(ip: String) -> Vec<usize> {
@@ -105,11 +152,9 @@ fn load_input(ip: String) -> Vec<usize> {
 
 fn convert_by_map(value: usize, map: &Vec<Vec<usize>>) -> usize {
     for map_value in map {
-        println!("Map value: {:?}", map_value);
         if (value >= map_value[1]) && (value < map_value[1] + map_value[2])
         {
             let diff = value - map_value[1];
-            println!("Diff: {}", diff);
             return map_value[0] + diff;
         }
     }
