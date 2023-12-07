@@ -10,7 +10,7 @@ fn main() {
         let card_list = vec![
             'A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2',
         ];
-        let mut hands: Vec<(Vec<(&char, &i32)>, usize)> = Vec::new();
+        let mut hands: Vec<(Vec<(char, i32)>, usize)> = Vec::new();
 
         // Consumes the iterator, returns an (Optional) String
         for line in lines {
@@ -21,24 +21,34 @@ fn main() {
                     .collect::<Vec<String>>();
 
                 let hand_hash_map = into_character_map(&hand[0]);
-                let mut cards_in_hand: Vec<_> = hand_hash_map.iter().collect();
+                let mut cards_in_hand: Vec<_> = hand_hash_map.into_iter().collect();
                 cards_in_hand.sort_unstable_by_key(|k| {
                     (
                         Reverse(k.1),
                         card_list
                             .iter()
-                            .position(|&x| x == *k.0)
+                            .position(|&x| x == k.0)
                             .unwrap(),
                     )
                 });
                 println!("{:?}", &cards_in_hand);
 
                 let bid = hand[1].parse::<usize>().unwrap();
-                let hand = (cards_in_hand, bid);
-                // hands.push(hand.clone());
-                println!("{:?}", hand.0);
+                hands.push((cards_in_hand, bid));
             }
         }
+
+        hands.sort_unstable_by_key(|k| {
+            (
+                Reverse(k.0[0].1),
+                card_list
+                    .iter()
+                    .position(|&x| x == k.0[0].0)
+                    .unwrap(),
+            )
+        });
+
+        println!("{:?}", hands);
     }
 }
 
