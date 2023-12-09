@@ -6,24 +6,36 @@ fn main() {
     // File input.txt must exist in the current path
     if let Ok(lines) = read_lines("../input.txt") {
         // Consumes the iterator, returns an (Optional) String\
-        let mut added_values: Vec<i32> = Vec::new();
+        let mut values_part_one: Vec<i32> = Vec::new();
+        let mut values_part_two: Vec<i32> = Vec::new();
         for line in lines {
             if let Ok(ip) = line {
                 let processed_coordinates = convert_to_coordinates(ip.clone());
                 let result: Vec<Vec<i32>> = Vec::new();
                 let process = calculate_differences(processed_coordinates, result);                
                 let mut last_value: i32 = 0;
-                
+                let mut first_value: i32 = 0;
+
+                println!("{:?}", process);
+
                 for i in 1..process.len() {
                     last_value = last_value + process[i].last().unwrap();
                 }
 
-                added_values.push(last_value);
+                for i in 1..process.len() {
+                    first_value = process[i].first().unwrap() - first_value;
+                }
+
+                values_part_one.push(last_value);
+                values_part_two.push(first_value);
             }
         }
 
-        let final_result: i32 = added_values.iter().sum();
-        println!("Final result: {}", final_result);
+        let final_result_part_one: i32 = values_part_one.iter().sum();
+        println!("Final result part 1: {}", final_result_part_one);
+
+        let final_result_part_two: i32 = values_part_two.iter().sum();
+        println!("Final result part 2: {}", final_result_part_two);
     }
 }
 
